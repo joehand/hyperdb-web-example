@@ -13,8 +13,14 @@
   "dependencies": {
     "choo": "^6.13.0",
     "choo-service-worker": "^2.4.0",
+    "hyperdb": "^3.2.0",
+    "pump": "^3.0.0",
+    "random-access-idb": "github:random-access-storage/random-access-idb",
+    "random-access-memory": "^3.0.0",
     "sheetify": "^7.3.3",
-    "tachyons": "^4.10.0"
+    "signalhub": "^4.9.0",
+    "tachyons": "^4.10.0",
+    "webrtc-swarm": "^2.9.0"
   },
   "devDependencies": {
     "bankai": "^9.14.0",
