@@ -1,6 +1,6 @@
 var css = require('sheetify')
 var choo = require('choo')
-var hyperdb = require('hyperdb')
+var hypercore = require('hypercore')
 var ram = require('random-access-memory')
 var signalhub = require('signalhub')
 var pump = require('pump')
@@ -18,41 +18,43 @@ if (process.env.NODE_ENV !== 'production') {
 app.use(require('./stores/clicks'))
 app.use(function (state, emitter) {
   emitter.on(state.events.DOMCONTENTLOADED, function () {
-    if (state.route === '/') return initDb()
-    if (state.params.key) return connectDb(state.params.key)
+    if (state.route === '/') return initCore()
+    if (state.params.key) return connectCore(state.params.key)
   })
 
-  function initDb () {
-    var db = hyperdb(ram)
-    db.on('ready', function () {
-      console.log(db.key.toString('hex'))
-      db.put('hello', 'world', function (err) {
+  function initCore () {
+    var feed = hypercore(ram)
+    feed.on('ready', function () {
+      console.log(feed.key.toString('hex'))
+      feed.append('hello world', function (err) {
         if (err) return console.error(err)
         console.log('wrote')
       })
 
-      var sw = swarm(signalhub(db.discoveryKey.toString('hex'), ['http://localhost:8000']))
+      var sw = swarm(signalhub(feed.discoveryKey.toString('hex'), ['http://localhost:8000']))
       sw.on('peer', function (conn) {
         console.log('peer')
-        pump(conn, db.replicate(), conn)
+        pump(conn, feed.replicate(), conn, function (err) {
+          console.error(err)
+        })
       })
     })
   }
 
-  function connectDb (key) {
-    var db = hyperdb(ram, key)
+  function connectCore (key) {
+    var feed = hypercore(ram, key)
 
-    db.on('ready', function () {
-      console.log(db.key.toString('hex'))
-      db.get('hello', function (err, val) {
+    feed.on('ready', function () {
+      console.log(feed.key.toString('hex'))
+      feed.get(0, function (err, val) {
         if (err) return console.error(err)
         console.log('got', val)
       })
 
-      var sw = swarm(signalhub(db.discoveryKey.toString('hex'), ['http://localhost:8000']))
+      var sw = swarm(signalhub(feed.discoveryKey.toString('hex'), ['http://localhost:8000']))
       sw.on('peer', function (conn) {
         console.log('peer')
-        pump(conn, db.replicate(), conn)
+        pump(conn, feed.replicate(), conn)
       })
     })
   }
